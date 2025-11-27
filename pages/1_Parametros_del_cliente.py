@@ -3,7 +3,7 @@ import streamlit as st
 st.title("1️⃣ Parámetros del cliente")
 
 st.markdown("""
-En esta sección defines las **condiciones de operación** del cliente.  
+En esta sección vamos a definir las **condiciones de operación** del cliente.  
 """)
 
 # ---------------------------
@@ -51,7 +51,6 @@ with st.form("form_parametros_cliente"):
             index=2,
         )
 
-    st.markdown("---")
     guardar = st.form_submit_button("💾 Guardar parámetros")
 
 if guardar:
@@ -71,7 +70,32 @@ if guardar:
 else:
     if "req" in st.session_state:
         st.info("Ya hay parámetros guardados. Puedes modificarlos y volver a guardar.")
-        st.write("Parámetros guardados actualmente:")
-        st.json(st.session_state["req"])
     else:
         st.info("Aún no hay parámetros guardados. Completa el formulario y presiona **Guardar parámetros**.")
+
+with st.form('Texto_vector_counterizer'):
+    st.subheader('📝 Descripcion completa del lubricante')
+
+    descripcion_cliente = st.text_area(
+        label="Escribe aquí la descripción completa del cliente:",
+        placeholder="Ejemplo: Cliente del sector automotriz que requiere lubricantes con alta resistencia al agua...",
+        height=150
+    )
+
+    guardar2 =st.form_submit_button('💾 Guardar descripción')
+
+if guardar2:
+    if descripcion_cliente.strip() != "":
+
+        st.session_state["descripcion_cliente"] = descripcion_cliente
+        st.success("✅ Parámetros guardados correctamente.")
+    else:
+        st.error("🚨 No puedes guardar un texto vacío. Por favor escribe una descripción.")
+else:
+    # Mostrar mensaje informativo SOLO si aún no se ha guardado
+    if "descripcion_cliente" not in st.session_state:
+        st.info("Aún no hay un texto guardado. Completa la descripción y presiona **Guardar descripción**.")
+    else:
+        st.info("Ya hay una descripción guardada. Puedes modificarla y volver a guardar.")
+
+
