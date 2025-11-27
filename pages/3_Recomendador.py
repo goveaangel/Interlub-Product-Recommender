@@ -10,7 +10,7 @@ from scripts.recomendador import (
 st.title("2️⃣ Recomendador de grasas Interlub")
 
 st.markdown("""
-Usando los parámetros definidos en **1_Parametros_del_cliente**, 
+Usando los parámetros definidos en **Parametros del cliente**, 
 el sistema calcula el **ranking de grasas Interlub** que mejor se ajustan
 al perfil del cliente.
 """)
