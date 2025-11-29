@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+import altair as alt
+import plotly.graph_objects as go
 from sklearn.metrics.pairwise import cosine_similarity
 import matplotlib.pyplot as plt
 from math import pi
@@ -46,9 +48,9 @@ def preparar_df_grasas_raw(df: pd.DataFrame) -> pd.DataFrame:
 
 
 # Cargar dataframes globales (para usar en las funciones de abajo)
-df_interlub_raw   = preparar_df_grasas_raw(pd.read_csv(RUTA_RAW_INTERLUB))
-df_interlub_model = pd.read_csv(RUTA_MODEL_INTERLUB)
-df_comp_model     = pd.read_csv(RUTA_MODEL_COMP)   # por ahora casi no lo usamos
+df_interlub_raw   = preparar_df_grasas_raw(pd.read_csv(RUTA_RAW_INTERLUB, encoding='utf-8'))
+df_interlub_model = pd.read_csv(RUTA_MODEL_INTERLUB, encoding='utf-8')
+df_comp_model     = pd.read_csv(RUTA_MODEL_COMP, encoding='utf-8')   # por ahora casi no lo usamos
 
 feature_cols = df_interlub_model.columns.tolist()
 
@@ -323,27 +325,33 @@ def recomendar_interlub_pro(
 # -------------------------------
 
 def plot_ranking(df_top, score_col="score_norm", title="Top recomendaciones Interlub"):
-    fig, ax = plt.subplots(figsize=(8, 4))
-    x_labels = df_top.index.astype(str)
-    valores = df_top[score_col]
+    df_tmp = df_top.reset_index().rename(columns={"index": "Grasa", score_col: "Score"})
 
-    bars = ax.bar(x_labels, valores)
-    ax.set_ylabel("Score (%)")
-    ax.set_title(title)
-    ax.set_xticklabels(x_labels, rotation=45)
-
-    for bar, v in zip(bars, valores):
-        ax.text(
-            bar.get_x() + bar.get_width() / 2,
-            v + 1,
-            f"{v:.1f}%",
-            ha="center",
-            va="bottom",
+    chart = (
+        alt.Chart(df_tmp)
+        .mark_bar(cornerRadius=5)   # bordes redondeados
+        .encode(
+            x=alt.X("Grasa:N", sort='-y'),
+            y=alt.Y("Score:Q", title="Score (%)"),
+            tooltip=["Grasa", "Score"]
         )
+        .properties(
+            title=title,
+            width=600,
+            height=350
+        )
+    )
 
-    ax.set_ylim(0, max(valores) * 1.15)
-    fig.tight_layout()
-    return fig
+    # Añadir etiquetas encima de cada barra
+    text = chart.mark_text(
+        align="center",
+        baseline="bottom",
+        dy=-2
+    ).encode(
+        text=alt.Text("Score:Q", format=".1f")
+    )
+
+    return chart + text
 
 
 def plot_radar_profile(
@@ -353,37 +361,78 @@ def plot_radar_profile(
     numeric_cols,
     title="Perfil radar",
 ):
-    labels = numeric_cols
-    N = len(labels)
+    labels = list(numeric_cols)
 
+    # Valores
     vals_ideal = fila_ideal[labels].values.astype(float)
     vals_prod  = fila_producto[labels].values.astype(float)
 
-    mins = df_all[labels].min()
-    maxs = df_all[labels].max()
+    # Normalización 0–1
+    mins = df_all[labels].min().values.astype(float)
+    maxs = df_all[labels].max().values.astype(float)
+
     vals_ideal_norm = (vals_ideal - mins) / (maxs - mins + 1e-9)
     vals_prod_norm  = (vals_prod  - mins) / (maxs - mins + 1e-9)
 
-    vals_ideal_norm = np.append(vals_ideal_norm, vals_ideal_norm[0])
-    vals_prod_norm  = np.append(vals_prod_norm,  vals_prod_norm[0])
-    angles = [n / float(N) * 2 * pi for n in range(N)]
-    angles += angles[:1]
+    fig = go.Figure()
 
-    fig = plt.figure(figsize=(8, 8))
-    ax = plt.subplot(111, polar=True)
+    # Ideal cliente
+    fig.add_trace(
+        go.Scatterpolar(
+            r=vals_ideal_norm,
+            theta=labels,
+            fill="toself",
+            name="Ideal cliente",
+            line=dict(width=3, color="#4C78A8"),             # azul
+            fillcolor="rgba(76, 120, 168, 0.45)",
+            opacity=0.9,
+        )
+    )
 
-    ax.set_xticks(angles[:-1])
-    ax.set_xticklabels(labels, fontsize=10)
+    # Producto
+    fig.add_trace(
+        go.Scatterpolar(
+            r=vals_prod_norm,
+            theta=labels,
+            fill="toself",
+            name="Producto",
+            line=dict(width=3, color="#F58518"),             # naranja
+            fillcolor="rgba(245, 133, 24, 0.45)",
+            opacity=0.9,
+        )
+    )
 
-    ax.plot(angles, vals_ideal_norm, linewidth=2, label="Ideal cliente")
-    ax.fill(angles, vals_ideal_norm, alpha=0.2)
+    fig.update_layout(
+        title=dict(
+            text=title,
+            x=0.5,
+            xanchor="center",
+        ),
+        polar=dict(
+            bgcolor="rgba(0,0,0,0)",  # transparente, respeta tema de Streamlit
+            radialaxis=dict(
+                visible=True,
+                range=[0, 1],
+                tickformat=".1f",
+                tickfont=dict(color="#E0E0E0", size=12),     # números claros
+                gridcolor="rgba(200,200,200,0.25)",
+                linecolor="rgba(200,200,200,0.4)",
+            ),
+            angularaxis=dict(
+                tickfont=dict(color="#E0E0E0", size=12),     # nombres de variables claros
+            ),
+        ),
+        showlegend=True,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=-0.12,
+            xanchor="center",
+            x=0.5,
+            font=dict(color="#E0E0E0", size=12),
+        ),
+        margin=dict(l=40, r=40, t=80, b=80),
+        height=550,   # más grande
+    )
 
-    ax.plot(angles, vals_prod_norm, linewidth=2, label="Producto")
-    ax.fill(angles, vals_prod_norm, alpha=0.2)
-
-    ax.set_title(title, y=1.12)
-    ax.legend(loc="upper right", bbox_to_anchor=(1.2, 1.1))
-
-    fig.tight_layout()
     return fig
-

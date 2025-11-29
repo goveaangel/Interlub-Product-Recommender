@@ -69,16 +69,6 @@ with col6:
     else:
         st.write("Nivel de criticidad: N/D")
 
-with st.expander("Ver detalle técnico del perfil y variables latentes"):
-    st.markdown("**Vector objetivo v2_deseado (req):**")
-    st.write(req)
-
-    if latent_levels is not None:
-        st.markdown("**Niveles internos (latentes):**")
-        st.write(latent_levels)
-    else:
-        st.info("No se encontraron niveles latentes en `st.session_state`.")
-
 st.markdown("---")
 
 # Flag en session_state para saber si ya corrimos el recomendador
@@ -105,6 +95,12 @@ if ejecutar:
     st.session_state["fila_cliente_raw"] = fila_cliente_raw
     st.session_state["recom_ejecutado"] = True
     st.success("✅ Recomendaciones generadas correctamente.")
+
+    if df_top is not None and not df_top.empty:
+
+        index_mejor = df_top.index[0]
+        mejor_grasa = f"Grasa_{index_mejor}"
+        st.session_state['mejor_grasa'] = mejor_grasa
 
 # Si todavía no se ha ejecutado nunca, mostramos el mensaje y paramos
 if not st.session_state["recom_ejecutado"]:
@@ -140,8 +136,6 @@ st.session_state["fila_cliente_raw"] = fila_cliente_raw
 if df_top is None or df_top.empty:
     st.warning("No se encontraron grasas que cumplan los requisitos actuales.")
     st.stop()
-
-st.success("✅ Recomendaciones generadas correctamente.")
 
 # ---------------------------
 # 1. Tabla resumen
@@ -184,8 +178,8 @@ st.dataframe(
 # ---------------------------
 st.subheader("🏆 Ranking (score normalizado)")
 
-fig_bar = plot_ranking(df_top, score_col="score_norm")
-st.pyplot(fig_bar)
+fig_bar = plot_ranking(df_top)
+st.altair_chart(fig_bar, use_container_width=True)
 
 # ---------------------------
 # 3. Radar chart para una grasa específica
@@ -213,10 +207,11 @@ numeric_cols = [c for c in numeric_cols if c in df_interlub_raw.columns]
 fila_ideal = fila_cliente_raw.iloc[0]
 
 fig_radar = plot_radar_profile(
-    df_interlub_raw,
-    fila_ideal,
-    fila_producto,
-    numeric_cols,
+    df_all=df_interlub_raw,
+    fila_ideal=fila_ideal,
+    fila_producto=fila_producto,
+    numeric_cols=numeric_cols,
     title=f"Radar de Grasa #{idx_opcion}",
 )
-st.pyplot(fig_radar)
+
+st.plotly_chart(fig_radar, use_container_width=True)

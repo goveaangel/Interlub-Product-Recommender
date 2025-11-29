@@ -537,14 +537,6 @@ if guardar:
 
     st.success("✅ Parámetros del cuestionario guardados correctamente.")
 
-    with st.expander("Ver resumen calculado (para revisión técnica)"):
-        col_a, col_b = st.columns(2)
-        with col_a:
-            st.markdown("**Niveles internos (latentes)**")
-            st.write(niveles.__dict__)
-        with col_b:
-            st.markdown("**Vector objetivo v2_deseado**")
-            st.write(req)
 else:
     if "req" in st.session_state:
         st.info("Ya hay parámetros de cuestionario guardados. Puedes modificarlos y volver a guardar.")
