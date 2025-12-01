@@ -114,25 +114,25 @@ import plotly.graph_objects as go  # asegúrate de tener esto arriba del archivo
 
 def plot_radar_texto(
     df_all: pd.DataFrame,
-    df_top_texto: pd.DataFrame,
-    idx_producto,
+    fila_ideal: pd.Series,
+    fila_producto: pd.Series,
     numeric_cols,
     title="Radar (modo texto)",
 ):
     """
     Radar para el recomendador de TEXTO.
 
-    - 'Ideal' = promedio de las grasas recomendadas por texto (df_top_texto)
-    - 'Producto' = grasa seleccionada (idx_producto) dentro de df_all
+    - 'Ideal' = una grasa de referencia (por ejemplo, la top 1 de df_top_texto)
+    - 'Producto' = grasa seleccionada para comparar
 
     Parameters
     ----------
     df_all : DataFrame
         DataFrame numérico completo (por ejemplo df_interlub_raw).
-    df_top_texto : DataFrame
-        DataFrame resultante de recomendar_por_texto (solo índices recomendados).
-    idx_producto :
-        Índice de la grasa seleccionada para comparar.
+    fila_ideal : Series
+        Fila (grasa) que se toma como referencia "ideal".
+    fila_producto : Series
+        Fila (grasa) seleccionada por el usuario.
     numeric_cols : list
         Columnas numéricas a graficar en el radar.
     title : str
@@ -141,34 +141,27 @@ def plot_radar_texto(
 
     labels = list(numeric_cols)
 
-    # 1) Construir fila_ideal y fila_producto
-    # Ideal = promedio de las grasas recomendadas por texto
-    fila_ideal = df_all.loc[df_top_texto.index][labels].mean()
-
-    # Producto = grasa seleccionada
-    fila_producto = df_all.loc[idx_producto]
-
-    # 2) Extraer valores en el mismo orden de labels
+    # 1) Extraer valores en el mismo orden de labels
     vals_ideal = fila_ideal[labels].values.astype(float)
     vals_prod  = fila_producto[labels].values.astype(float)
 
-    # 3) Normalización 0–1 usando TODO df_all
+    # 2) Normalización 0–1 usando TODO df_all
     mins = df_all[labels].min().values.astype(float)
     maxs = df_all[labels].max().values.astype(float)
 
     vals_ideal_norm = (vals_ideal - mins) / (maxs - mins + 1e-9)
     vals_prod_norm  = (vals_prod  - mins) / (maxs - mins + 1e-9)
 
-    # 4) Construir figura
+    # 3) Construir figura
     fig = go.Figure()
 
-    # Perfil promedio (modo texto)
+    # Ideal texto
     fig.add_trace(
         go.Scatterpolar(
             r=vals_ideal_norm,
             theta=labels,
             fill="toself",
-            name="Perfil promedio (texto)",
+            name="Ideal recomendador",
             line=dict(width=3, color="#4C78A8"),             # azul
             fillcolor="rgba(76, 120, 168, 0.45)",
             opacity=0.9,

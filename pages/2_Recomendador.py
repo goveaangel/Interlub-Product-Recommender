@@ -291,17 +291,21 @@ elif st.session_state["modo_recomendador"] == 'Texto':
             with st.spinner("Analizando texto y buscando grasas similares..."):
                 try:
                     df_top_texto = recomendar_por_texto(descripcion_cliente, top_n)
-                    st.warning(top_n)
 
                     if df_top_texto is None or df_top_texto.empty:
                         st.warning("No se encontraron grasas similares para este texto.")
                         st.session_state["df_top_texto"] = None
                         st.session_state["texto_ejecutado"] = False
+                            
                     else:
                         # Guardamos resultados en session_state
                         st.session_state["df_top_texto"] = df_top_texto
                         st.session_state["texto_ejecutado"] = True
                         st.success("✅ Recomendaciones por texto generadas correctamente.")
+
+                        index_mejor = df_top_texto.index[0]
+                        mejor_grasa = f"Grasa_{index_mejor}"
+                        st.session_state['mejor_grasa'] = mejor_grasa
 
                 except Exception as e:
                     st.error(f"❌ Ocurrió un error al generar las recomendaciones por texto: {e}")
@@ -377,10 +381,11 @@ elif st.session_state["modo_recomendador"] == 'Texto':
         key="idx_radar_texto",
     )
 
-    # Fila del producto en el espacio RAW (numérico)
+    # Filas en el espacio RAW (numérico)
     fila_producto_texto = df_interlub_raw.loc[idx_opcion_texto]
+    fila_ideal_texto    = df_interlub_raw.loc[idx_ideal_texto]
 
-    # Variables numéricas que queremos ver, igual que en el modo Formulario
+    # Variables numéricas que queremos ver
     numeric_cols = [
         "Temperatura de Servicio °C, min",
         "Temperatura de Servicio °C, max",
@@ -390,10 +395,7 @@ elif st.session_state["modo_recomendador"] == 'Texto':
     ]
     numeric_cols = [c for c in numeric_cols if c in df_interlub_raw.columns]
 
-    # 👉 Ideal en modo texto = UNA grasa del df_top_texto (la top 1)
-    fila_ideal_texto = df_interlub_raw.loc[idx_ideal_texto]
-
-    # Usamos la MISMA función de radar del backend
+    # Usamos la nueva función de radar para TEXTO
     fig_radar_texto = plot_radar_texto(
         df_all=df_interlub_raw,
         fila_ideal=fila_ideal_texto,
