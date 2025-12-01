@@ -38,7 +38,7 @@ with st.expander('**1️⃣ Definir parámetros del cliente**'):
         - Defines si existe **presencia de agua / lavado** o ambientes agresivos.
         - Seleccionas el **nivel de carga mecánica / severidad del servicio**.
         - Eliges cuántas **recomendaciones** quieres ver.
-        - (Escribes una **descripción libre del caso** para análisis de texto.
+        - Escribes una **descripción libre del caso** para análisis de texto.
         - Finalmente presionas **Guardar parámetros**, lo que genera el **perfil objetivo** y/o guarda el texto descriptivo sobre el lubricante.
     ''')
 
