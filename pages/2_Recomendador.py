@@ -11,9 +11,12 @@ from scripts.recomendador_palabras import recomendar_por_texto, plot_radar_texto
 st.title("2️⃣ Recomendador de grasas Interlub")
 
 st.markdown("""
-Usando las respuestas del **cuestionario de parámetros del cliente**, 
-el sistema calcula un perfil objetivo (**v2_deseado**) y, con base en éste, 
-genera el **ranking de grasas Interlub** que mejor se ajustan al perfil.
+El perfil objetivo del cliente se genera a partir de la información capturada en la sección anterior,
+ya sea mediante el **formulario**, el **texto descriptivo** o el **modo mixto**.
+
+Con este perfil, el sistema evalúa todas las grasas disponibles y produce un 
+**ranking de compatibilidad**, mostrando cuáles formulaciones de Interlub se ajustan mejor a las 
+condiciones reales de operación y a las necesidades expresadas por el usuario.
 """)
 
 # -------------------------------------------------
@@ -391,7 +394,7 @@ elif st.session_state["modo_recomendador"] == 'Texto':
     fila_ideal_texto = df_interlub_raw.loc[idx_ideal_texto]
 
     # Usamos la MISMA función de radar del backend
-    fig_radar_texto = plot_radar_profile(
+    fig_radar_texto = plot_radar_texto(
         df_all=df_interlub_raw,
         fila_ideal=fila_ideal_texto,
         fila_producto=fila_producto_texto,
