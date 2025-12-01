@@ -270,16 +270,20 @@ def transformar_respuestas_a_v2(respuestas: QuestionnaireResponse):
 st.title("1️⃣ Parámetros del cliente")
 
 st.markdown("""
-En esta sección vamos a definir las **condiciones de operación** del cliente mediante un cuestionario.  
-A partir de las respuestas, el sistema calcula variables **latentes** (severidad térmica, carga, choque, criticidad)
-y construye un vector objetivo aproximado **v2_deseado** para el recomendador de grasas.
+En esta sección recopilamos las **condiciones de operación del cliente** mediante un cuestionario interactivo.  
+Con esta información, el sistema estima un conjunto de **variables latentes** (severidad térmica, carga,
+choque mecánico y nivel de criticidad) que permiten construir el **perfil objetivo** para el recomendador.
+
+Además, el usuario puede **describir libremente su aplicación** mediante un texto amplio.  
+Este texto será utilizado posteriormente para análisis semántico y enriquecer el proceso de recomendación.
 """)
 
 # ---------------------------
 # Layout en la página 
 # ---------------------------
 
-with st.form("form_parametros_cliente"):
+with st.expander('⚙️ Parámetros operativos del cliente'):
+
     st.subheader("📌 Condiciones de operación")
 
     # ------------------------------------------------------------------
@@ -461,94 +465,86 @@ with st.form("form_parametros_cliente"):
     cond_sin_especiales = st.checkbox("Ninguna condición especial relevante")
 
     # ------------------------------------------------------------------
-    # Parámetro general de la app (como en tu ejemplo original)
+    # Botón guardar (SIN form)
     # ------------------------------------------------------------------
-    top_n = st.slider(
-        "Número de recomendaciones a mostrar",
-        min_value=3,
-        max_value=10,
-        value=5,
-    )
+    guardar = st.button("💾 Guardar parámetros")
 
-    guardar = st.form_submit_button("💾 Guardar parámetros")
+    # ------------------------------------------------------------------
+    # Procesamiento y guardado en session_state
+    # ------------------------------------------------------------------
+    if guardar:
+        # Normalización P4 (coherencia con "ninguno")
+        if problemas_temp_ninguno:
+            problemas_temp_escurre = False
+            problemas_temp_quemado = False
+            problemas_temp_arranque_duro = False
+        else:
+            if problemas_temp_escurre or problemas_temp_quemado or problemas_temp_arranque_duro:
+                problemas_temp_ninguno = False
 
-# ----------------------------------------------------------------------
-# Procesamiento y guardado en session_state
-# ----------------------------------------------------------------------
-if guardar:
-    # Normalización P4 (coherencia con "ninguno")
-    if problemas_temp_ninguno:
-        problemas_temp_escurre = False
-        problemas_temp_quemado = False
-        problemas_temp_arranque_duro = False
+        # Normalización P13
+        if cond_sin_especiales:
+            cond_agua_lavado = False
+            cond_polvo = False
+            cond_contacto_alimentos = False
+            cond_vibraciones = False
+        else:
+            if cond_agua_lavado or cond_polvo or cond_contacto_alimentos or cond_vibraciones:
+                cond_sin_especiales = False
+
+        respuestas = QuestionnaireResponse(
+            ambiente_termico=ambiente_termico,
+            temp_max_opcion=temp_max_opcion,
+            arranques_en_frio=arranques_en_frio,
+            problemas_temp_escurre=problemas_temp_escurre,
+            problemas_temp_quemado=problemas_temp_quemado,
+            problemas_temp_arranque_duro=problemas_temp_arranque_duro,
+            problemas_temp_ninguno=problemas_temp_ninguno,
+            tipo_carga=tipo_carga,
+            arranques_paros=arranques_paros,
+            sobrecargas_frecuencia=sobrecargas_frecuencia,
+            criticidad_equipo=criticidad_equipo,
+            historial_fallas=historial_fallas,
+            tolerancia_desgaste=tolerancia_desgaste,
+            tipo_equipo=tipo_equipo,
+            industria=industria,
+            cond_agua_lavado=cond_agua_lavado,
+            cond_polvo=cond_polvo,
+            cond_contacto_alimentos=cond_contacto_alimentos,
+            cond_vibraciones=cond_vibraciones,
+            cond_sin_especiales=cond_sin_especiales,
+        )
+
+        niveles, v2_deseado = transformar_respuestas_a_v2(respuestas)
+
+        # Lo que va a usar el recomendador
+        req = {
+            "punto_gota_obj": v2_deseado.punto_gota_obj,
+            "punto_soldadura_4b_obj": v2_deseado.punto_soldadura_4b_obj,
+            "desgaste_4b_obj": v2_deseado.desgaste_4b_obj,
+            "temp_min_servicio_obj": v2_deseado.temp_min_servicio_obj,
+            "temp_max_servicio_obj": v2_deseado.temp_max_servicio_obj,
+        }
+
+        st.session_state["req"] = req
+        st.session_state["questionnaire_raw"] = respuestas.__dict__
+        st.session_state["latent_levels"] = niveles.__dict__
+        st.session_state["v2_deseado"] = v2_deseado.to_list()
+
+        st.success("✅ Parámetros del cuestionario guardados correctamente.")
+
     else:
-        if problemas_temp_escurre or problemas_temp_quemado or problemas_temp_arranque_duro:
-            problemas_temp_ninguno = False
-
-    # Normalización P13
-    if cond_sin_especiales:
-        cond_agua_lavado = False
-        cond_polvo = False
-        cond_contacto_alimentos = False
-        cond_vibraciones = False
-    else:
-        if cond_agua_lavado or cond_polvo or cond_contacto_alimentos or cond_vibraciones:
-            cond_sin_especiales = False
-
-    respuestas = QuestionnaireResponse(
-        ambiente_termico=ambiente_termico,
-        temp_max_opcion=temp_max_opcion,
-        arranques_en_frio=arranques_en_frio,
-        problemas_temp_escurre=problemas_temp_escurre,
-        problemas_temp_quemado=problemas_temp_quemado,
-        problemas_temp_arranque_duro=problemas_temp_arranque_duro,
-        problemas_temp_ninguno=problemas_temp_ninguno,
-        tipo_carga=tipo_carga,
-        arranques_paros=arranques_paros,
-        sobrecargas_frecuencia=sobrecargas_frecuencia,
-        criticidad_equipo=criticidad_equipo,
-        historial_fallas=historial_fallas,
-        tolerancia_desgaste=tolerancia_desgaste,
-        tipo_equipo=tipo_equipo,
-        industria=industria,
-        cond_agua_lavado=cond_agua_lavado,
-        cond_polvo=cond_polvo,
-        cond_contacto_alimentos=cond_contacto_alimentos,
-        cond_vibraciones=cond_vibraciones,
-        cond_sin_especiales=cond_sin_especiales,
-    )
-
-    niveles, v2_deseado = transformar_respuestas_a_v2(respuestas)
-
-    # Lo que va a usar el recomendador (puedes ajustar nombres si quieres)
-    req = {
-        "punto_gota_obj": v2_deseado.punto_gota_obj,
-        "punto_soldadura_4b_obj": v2_deseado.punto_soldadura_4b_obj,
-        "desgaste_4b_obj": v2_deseado.desgaste_4b_obj,
-        "temp_min_servicio_obj": v2_deseado.temp_min_servicio_obj,
-        "temp_max_servicio_obj": v2_deseado.temp_max_servicio_obj,
-    }
-
-    st.session_state["req"] = req
-    st.session_state["top_n"] = top_n
-    st.session_state["questionnaire_raw"] = respuestas.__dict__
-    st.session_state["latent_levels"] = niveles.__dict__
-    st.session_state["v2_deseado"] = v2_deseado.to_list()
-
-    st.success("✅ Parámetros del cuestionario guardados correctamente.")
-
-else:
-    if "req" in st.session_state:
-        st.info("Ya hay parámetros de cuestionario guardados. Puedes modificarlos y volver a guardar.")
-    else:
-        st.info("Aún no hay parámetros guardados. Completa el cuestionario y presiona **Guardar parámetros**.")
+        if "req" in st.session_state:
+            st.info("Ya hay parámetros de cuestionario guardados. Puedes modificarlos y volver a guardar.")
+        else:
+            st.info("Aún no hay parámetros guardados. Completa el cuestionario y presiona **Guardar parámetros**.")
 
 
 # -------------------------------------------------------------------
 # 5. Texto libre para CountVectorizer (tal cual tu ejemplo)
 # -------------------------------------------------------------------
 
-with st.form('Texto_vector_counterizer'):
+with st.expander('📝 Descripción detallada de la aplicación'):
     st.subheader('📝 Descripción completa del lubricante')
 
     descripcion_cliente = st.text_area(
@@ -560,16 +556,28 @@ with st.form('Texto_vector_counterizer'):
         height=150
     )
 
-    guardar2 = st.form_submit_button('💾 Guardar descripción')
+    guardar2 = st.button('💾 Guardar descripción')
 
-if guardar2:
-    if descripcion_cliente.strip() != "":
-        st.session_state["descripcion_cliente"] = descripcion_cliente
-        st.success("✅ Descripción guardada correctamente.")
+    if guardar2:
+        if descripcion_cliente.strip() != "":
+            st.session_state["descripcion_cliente"] = descripcion_cliente
+            st.success("✅ Descripción guardada correctamente.")
+        else:
+            st.error("🚨 No puedes guardar un texto vacío. Por favor escribe una descripción.")
     else:
-        st.error("🚨 No puedes guardar un texto vacío. Por favor escribe una descripción.")
-else:
-    if "descripcion_cliente" not in st.session_state:
-        st.info("Aún no hay un texto guardado. Completa la descripción y presiona **Guardar descripción**.")
-    else:
-        st.info("Ya hay una descripción guardada. Puedes modificarla y volver a guardar.")
+        if "descripcion_cliente" not in st.session_state:
+            st.info("Aún no hay un texto guardado. Completa la descripción y presiona **Guardar descripción**.")
+        else:
+            st.info("Ya hay una descripción guardada. Puedes modificarla y volver a guardar.")
+
+# ---------------------------
+# Slider
+# ---------------------------
+top_n = st.slider(
+    "Número de recomendaciones a mostrar",
+    min_value=3,
+    max_value=10,
+    value=5,
+)
+
+st.session_state['top_n'] = top_n
