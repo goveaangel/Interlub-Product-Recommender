@@ -199,7 +199,8 @@ def plot_cambio_variables(resumen: pd.DataFrame, variable_cambiada: str):
     para cada variable en el índice de `resumen`.
     """
     # Pasar índice a columna
-    df_plot = resumen.copy().reset_index().rename(columns={"index": "Variable"})
+    df_plot = resumen.drop(index=[variable_cambiada]).copy()
+    df_plot = df_plot.copy().reset_index().rename(columns={"index": "Variable"})
 
     # Renombrar columnas para nombres bonitos
     df_plot = df_plot.rename(

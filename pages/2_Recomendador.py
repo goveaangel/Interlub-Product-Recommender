@@ -55,7 +55,7 @@ if st.session_state["modo_recomendador"] == 'Formulario':
     top_n = st.session_state["top_n"]
     latent_levels = st.session_state.get("latent_levels", None)
 
-    st.subheader("📌 Parámetros en uso (perfil objetivo v2_deseado)")
+    st.subheader("📌 Parámetros en uso")
 
     # Extraer del req el vector objetivo
     temp_min_servicio_obj = req["temp_min_servicio_obj"]
