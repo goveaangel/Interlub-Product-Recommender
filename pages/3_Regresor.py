@@ -62,15 +62,7 @@ delta = st.slider(
     min_value=float(delta_min),
     max_value=float(delta_max),
     value=0.0,
-    step=float(delta_step),
-)
-
-factor_ajuste = st.slider(
-    "Factor de ajuste del modelo (0 = casi sin cambio, 1 = cambio completo)",
-    min_value=0.0,
-    max_value=1.0,
-    value=0.5,
-    step=0.05,
+    step=float(delta_step)
 )
 
 simular = st.button("🚀 Simular escenario")
@@ -87,9 +79,7 @@ if simular:
         modelos=modelos,
         variable_cambiada=variable_cambiada,
         delta=delta,
-        factor_ajuste=factor_ajuste,
     )
-
 
     st.subheader("Resumen del escenario")
     st.dataframe(resumen.style.format("{:.2f}"))

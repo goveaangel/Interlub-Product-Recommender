@@ -4,8 +4,8 @@ st.set_page_config(
     page_title="Recomendador de Grasas Interlub",
     layout="wide"
 )
-
-st.title("🧪 Recomendador de Grasas Interlub")
+st.image('images/interlub2.png')
+st.title("Recomendador de Grasas")
 
 st.markdown("""
 ### Bienvenido al Recomendador de Grasas Interlub

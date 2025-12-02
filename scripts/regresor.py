@@ -127,7 +127,6 @@ def simular_cambio_grasa(
     modelos,
     variable_cambiada,
     delta,
-    factor_ajuste=0.5,
 ):
     """
     Simula el efecto de modificar una variable de una grasa real.
@@ -185,7 +184,7 @@ def simular_cambio_grasa(
         y_pred = modelo.predict(X_scaled)[0]
 
         y_original = grasa_real[v_obj]
-        y_nuevo = y_original + factor_ajuste * (y_pred - y_original)
+        y_nuevo = y_original + (y_pred - y_original)
 
         resumen.loc[v_obj, "valor_predicho_modelo"] = y_nuevo
 
