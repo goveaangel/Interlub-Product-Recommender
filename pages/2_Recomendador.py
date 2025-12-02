@@ -41,28 +41,30 @@ modo = st.session_state["modo_recomendador"]
 st.write(f"**Modo actual:** {modo}")
 
 if st.session_state["modo_recomendador"] == 'Formulario':
-
     # ---------------------------
     # Verificar parámetros
     # ---------------------------
-    if "req" not in st.session_state or "top_n" not in st.session_state:
+    if "req_v2" not in st.session_state or "req_pro" not in st.session_state or "top_n" not in st.session_state:
         st.warning(
             "Primero ve a **Parámetros del cliente** para completar el cuestionario y guardar los parámetros."
         )
         st.stop()
 
-    req = st.session_state["req"]               # viene de cuestionario_grasas (v2_deseado)
+    # req_v2 = perfil técnico objetivo (v2) para mostrar métricas
+    req_v2 = st.session_state["req_v2"]
+    # req_pro = requisitos en formato que entiende recomendar_interlub_pro
+    req_pro = st.session_state["req_pro"]
     top_n = st.session_state["top_n"]
     latent_levels = st.session_state.get("latent_levels", None)
 
     st.subheader("📌 Parámetros en uso")
 
-    # Extraer del req el vector objetivo
-    temp_min_servicio_obj = req["temp_min_servicio_obj"]
-    temp_max_servicio_obj = req["temp_max_servicio_obj"]
-    punto_gota_obj = req["punto_gota_obj"]
-    punto_soldadura_4b_obj = req["punto_soldadura_4b_obj"]
-    desgaste_4b_obj = req["desgaste_4b_obj"]
+    # Extraer del req_v2 el vector objetivo
+    temp_min_servicio_obj = req_v2["temp_min_servicio_obj"]
+    temp_max_servicio_obj = req_v2["temp_max_servicio_obj"]
+    punto_gota_obj = req_v2["punto_gota_obj"]
+    punto_soldadura_4b_obj = req_v2["punto_soldadura_4b_obj"]
+    desgaste_4b_obj = req_v2["desgaste_4b_obj"]
 
     # ---------------------------
     # Mostrar resumen en métricas
@@ -108,7 +110,7 @@ if st.session_state["modo_recomendador"] == 'Formulario':
         # Si se presiona el botón, calculamos nuevamente
         with st.spinner("Calculando recomendaciones..."):
             df_top, fila_cliente_raw = recomendar_interlub_pro(
-                req=req,
+                req=req_pro,       # 👈 AQUÍ USAMOS req_pro (T_min, T_max, carga, agua)
                 top_n=top_n,
             )
 
@@ -124,7 +126,6 @@ if st.session_state["modo_recomendador"] == 'Formulario':
         st.success("✅ Recomendaciones generadas correctamente.")
 
         if df_top is not None and not df_top.empty:
-
             index_mejor = df_top.index[0]
             mejor_grasa = f"Grasa_{index_mejor}"
             st.session_state['mejor_grasa'] = mejor_grasa
@@ -137,28 +138,6 @@ if st.session_state["modo_recomendador"] == 'Formulario':
     # A partir de aquí, SIEMPRE tomamos los datos desde session_state
     df_top = st.session_state["df_top"]
     fila_cliente_raw = st.session_state["fila_cliente_raw"]
-
-    # ---------------------------
-    # Llamar al backend
-    # ---------------------------
-    with st.spinner("Calculando recomendaciones..."):
-        # ⚠️ IMPORTANTE:
-        # Aquí `req` ahora contiene el v2_deseado, NO T_min/T_max/agua/carga.
-        # Asegúrate de adaptar la función `recomendar_interlub_pro` para que
-        # use estas claves:
-        #   - 'punto_gota_obj'
-        #   - 'punto_soldadura_4b_obj'
-        #   - 'desgaste_4b_obj'
-        #   - 'temp_min_servicio_obj'
-        #   - 'temp_max_servicio_obj'
-        df_top, fila_cliente_raw = recomendar_interlub_pro(
-            req=req,
-            top_n=top_n,
-        )
-
-    # Guardar en session_state por si se necesitan en otras pestañas
-    st.session_state["df_top"] = df_top
-    st.session_state["fila_cliente_raw"] = fila_cliente_raw
 
     if df_top is None or df_top.empty:
         st.warning("No se encontraron grasas que cumplan los requisitos actuales.")
@@ -242,7 +221,7 @@ if st.session_state["modo_recomendador"] == 'Formulario':
     )
 
     st.plotly_chart(fig_radar, use_container_width=True)
-
+    
 elif st.session_state["modo_recomendador"] == 'Texto':
 
     # -----------------------------------

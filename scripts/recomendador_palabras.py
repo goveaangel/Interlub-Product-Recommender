@@ -90,15 +90,9 @@ def recomendar_por_texto(texto, top_n: int = 5):
     df_all = data_grasas.copy()
     df_all["sim_texto"] = sim_scores
 
-    # 4. Normalización GLOBAL (usa todas las grasas)
-    s_min = df_all["sim_texto"].min()
-    s_max = df_all["sim_texto"].max()
-
-    if s_max > s_min:
-        df_all["score_norm_texto"] = 100 * (df_all["sim_texto"] - s_min) / (s_max - s_min)
-    else:
-        df_all["score_norm_texto"] = 50.0
-
+    sim_clipped = np.clip(df_all["sim_texto"].values, 0.0, 1.0)
+    df_all["score_norm_texto"] = sim_clipped * 100.0
+    
     # 5. Ordenar por similitud global antes del top_n
     df_all = df_all.sort_values("sim_texto", ascending=False)
 

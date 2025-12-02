@@ -24,20 +24,36 @@ st.header("🔧 Parámetros del escenario")
 # Seleccionar grasa por codigoGrasa
 codigos = list(datos_grasas_Tec["codigoGrasa"].unique())
 
-# Si ya tenemos mejor_grasa, ponerla al inicio
+# Intentar preseleccionar la mejor grasa proveniente del recomendador
+codigo_preseleccionado = None
+
 if "mejor_grasa" in st.session_state:
     mejor = st.session_state["mejor_grasa"]
 
-    if mejor in codigos:
-        codigos.remove(mejor)
-        codigos.insert(0, mejor)
+    # Caso 1: viene como "Grasa_123" (índice del df_interlub_raw / df_top)
+    if isinstance(mejor, str) and mejor.startswith("Grasa_"):
+        try:
+            idx = int(mejor.split("_", 1)[1])
+            if idx in datos_grasas_Tec.index:
+                codigo_preseleccionado = datos_grasas_Tec.loc[idx, "codigoGrasa"]
+        except Exception:
+            codigo_preseleccionado = None
+    # Caso 2: viene directamente como codigoGrasa
+    else:
+        if mejor in codigos:
+            codigo_preseleccionado = mejor
+
+# Si logramos obtener un código válido, lo movemos al inicio de la lista
+if codigo_preseleccionado in codigos:
+    codigos.remove(codigo_preseleccionado)
+    codigos.insert(0, codigo_preseleccionado)
 
 codigo_sel = st.selectbox("Selecciona una grasa:", options=codigos)
 
-if 'mejor_grasa' in st.session_state:
-    st.caption('La grasa preseleccionada es la mejor grasa segun el recomedador.')
+if "mejor_grasa" in st.session_state and codigo_preseleccionado is not None:
+    st.caption("La grasa preseleccionada es la mejor grasa según el recomendador.")
 else:
-    st.caption('Aún no hay una mejor grasa guardada.')
+    st.caption("Aún no hay una mejor grasa guardada.")
 
 fila_grasa = datos_grasas_Tec[datos_grasas_Tec["codigoGrasa"] == codigo_sel].iloc[0]
 grasa_real_vars = fila_grasa[variables_criticas]
@@ -68,6 +84,14 @@ delta = st.slider(
     step=float(delta_step)
 )
 
+factor_ajuste = st.slider(
+    "Factor de ajuste del modelo (0 = muy suave, 1 = completo)",
+    min_value=0.0,
+    max_value=1.0,
+    value=1.0,
+    step=0.1,
+)
+
 simular = st.button("🚀 Simular escenario")
 
 # ---------------- Contenido principal ----------------
@@ -82,6 +106,7 @@ if simular:
         modelos=modelos,
         variable_cambiada=variable_cambiada,
         delta=delta,
+        factor_ajuste=factor_ajuste,
     )
 
     st.subheader("Resumen del escenario")
