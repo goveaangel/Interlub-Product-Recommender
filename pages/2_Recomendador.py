@@ -25,18 +25,14 @@ condiciones reales de operación y a las necesidades expresadas por el usuario.
 if "modo_recomendador" not in st.session_state:
     st.session_state["modo_recomendador"] = None
 
-col1, col2, col3 = st.columns(3)
+col1, col2 = st.columns(2)
 
 with col1:
-    if st.button("🧮 Solo formulario"):
+    if st.button("🧮 Formulario"):
         st.session_state["modo_recomendador"] = "Formulario"
 
 with col2:
-    if st.button("🔗 Combinado"):
-        st.session_state["modo_recomendador"] = "Mixto"
-
-with col3:
-    if st.button("✍️ Solo texto"):
+    if st.button("✍️ Texto"):
         st.session_state["modo_recomendador"] = "Texto"
 
 
@@ -246,9 +242,6 @@ if st.session_state["modo_recomendador"] == 'Formulario':
     )
 
     st.plotly_chart(fig_radar, use_container_width=True)
-
-elif st.session_state["modo_recomendador"] == 'Mixto':
-    st.warning('hola')
 
 elif st.session_state["modo_recomendador"] == 'Texto':
 
