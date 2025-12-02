@@ -53,6 +53,9 @@ rango = vmax - vmin if vmax > vmin else 1.0
 if "Temperatura" in variable_cambiada or "°C" in variable_cambiada:
     delta_min, delta_max = -20.0, 20.0
     delta_step = 1.0
+elif 'Desgaste Cuatro Bolas, mm' in variable_cambiada:
+    delta_min, delta_max = -0.13, 0.13
+    delta_step = 0.01
 else:
     delta_min, delta_max = -0.5 * rango, 0.5 * rango
     delta_step = max(rango / 40.0, 0.1)

@@ -407,6 +407,7 @@ def plot_radar_profile(
             text=title,
             x=0.5,
             xanchor="center",
+            font=dict(size=22, color='black')
         ),
         polar=dict(
             bgcolor="rgba(0,0,0,0)",  # transparente, respeta tema de Streamlit
@@ -414,12 +415,12 @@ def plot_radar_profile(
                 visible=True,
                 range=[0, 1],
                 tickformat=".1f",
-                tickfont=dict(color="#E0E0E0", size=12),     # números claros
+                tickfont=dict(color="black", size=16),     # números claros
                 gridcolor="rgba(200,200,200,0.25)",
                 linecolor="rgba(200,200,200,0.4)",
             ),
             angularaxis=dict(
-                tickfont=dict(color="#E0E0E0", size=12),     # nombres de variables claros
+                tickfont=dict(color="black", size=16),     # nombres de variables claros
             ),
         ),
         showlegend=True,
@@ -429,10 +430,10 @@ def plot_radar_profile(
             y=-0.12,
             xanchor="center",
             x=0.5,
-            font=dict(color="#E0E0E0", size=12),
+            font=dict(color="black", size=16),
         ),
         margin=dict(l=40, r=40, t=80, b=80),
-        height=550,   # más grande
+        height=650,   # más grande
     )
 
     return fig

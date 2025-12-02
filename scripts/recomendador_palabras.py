@@ -186,6 +186,7 @@ def plot_radar_texto(
             text=title,
             x=0.5,
             xanchor="center",
+            font=dict(size=22, color='black')
         ),
         polar=dict(
             bgcolor="rgba(0,0,0,0)",
@@ -193,12 +194,12 @@ def plot_radar_texto(
                 visible=True,
                 range=[0, 1],
                 tickformat=".1f",
-                tickfont=dict(color="#E0E0E0", size=12),
+                tickfont=dict(color="black", size=16),
                 gridcolor="rgba(200,200,200,0.25)",
                 linecolor="rgba(200,200,200,0.4)",
             ),
             angularaxis=dict(
-                tickfont=dict(color="#E0E0E0", size=12),
+                tickfont=dict(color="black", size=16),
             ),
         ),
         showlegend=True,
@@ -208,10 +209,10 @@ def plot_radar_texto(
             y=-0.12,
             xanchor="center",
             x=0.5,
-            font=dict(color="#E0E0E0", size=12),
+            font=dict(color="black", size=16),
         ),
         margin=dict(l=40, r=40, t=80, b=80),
-        height=550,
+        height=650,
     )
 
     return fig
