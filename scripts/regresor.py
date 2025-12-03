@@ -186,7 +186,7 @@ def simular_cambio_grasa(
 
         y_original = grasa_real[v_obj]
         # Mezcla original + sugerencia del modelo
-        y_nuevo = y_original + factor_ajuste * (y_pred - y_original)
+        y_nuevo = y_pred
 
         resumen.loc[v_obj, "valor_predicho_modelo"] = y_nuevo
 
