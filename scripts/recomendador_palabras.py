@@ -9,6 +9,16 @@ import altair as alt
 #---------------
 data = pd.read_csv('data/datos_grasas_tec_limpio.csv', encoding='utf-8')
 
+cols_fix = ["descripcion", "beneficios", "aplicaciones", "subtitulo"]
+
+for c in cols_fix:
+    data[c] = (
+        data[c]
+        .astype(str)
+        .str.encode('latin1', errors='ignore')
+        .str.decode('utf-8', errors='ignore')
+    )
+
 # columnas
 data_col = [
     "Aceite Base",
