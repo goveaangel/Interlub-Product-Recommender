@@ -272,7 +272,7 @@ def construir_req_para_recomendador(
     recomendar_interlub_pro a partir de:
       - respuestas crudas del cuestionario
       - niveles latentes (carga, etc.)
-      - vector técnico objetivo v2 (temp min/max, etc.)
+      - vector técnico objetivo v2 (temp min/max, punto de gota, 4B, desgaste)
     """
 
     # Temperaturas objetivo desde v2
@@ -290,9 +290,13 @@ def construir_req_para_recomendador(
     # Presencia de agua / lavado frecuente
     ambiente_agua = respuestas.cond_agua_lavado
 
+    # NUEVO: enviar también los 5 objetivos v2 al recomendador
     req_recom = {
         "T_min": T_min,
         "T_max": T_max,
+        "punto_gota": v2.punto_gota_obj,
+        "punto_soldadura_4b": v2.punto_soldadura_4b_obj,
+        "desgaste_4b": v2.desgaste_4b_obj,
         "carga": carga_cat,
         "ambiente_agua": ambiente_agua,
     }

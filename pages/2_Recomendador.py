@@ -204,9 +204,9 @@ if st.session_state["modo_recomendador"] == 'Formulario':
     numeric_cols = [
         "Temperatura de Servicio °C, min",
         "Temperatura de Servicio °C, max",
-        "Resistencia al Lavado por Agua a 80°C, %",
+        "Punto de Gota, °C",
         "Punto de Soldadura Cuatro Bolas, kgf",
-        "Carga Timken Ok, lb",
+        "Desgaste Cuatro Bolas, mm",
     ]
     numeric_cols = [c for c in numeric_cols if c in df_interlub_raw.columns]
 
@@ -361,11 +361,12 @@ elif st.session_state["modo_recomendador"] == 'Texto':
     numeric_cols = [
         "Temperatura de Servicio °C, min",
         "Temperatura de Servicio °C, max",
-        "Resistencia al Lavado por Agua a 80°C, %",
+        "Punto de Gota, °C",
         "Punto de Soldadura Cuatro Bolas, kgf",
-        "Carga Timken Ok, lb",
+        "Desgaste Cuatro Bolas, mm",
     ]
     numeric_cols = [c for c in numeric_cols if c in df_interlub_raw.columns]
+
 
     # Usamos la nueva función de radar para TEXTO
     fig_radar_texto = plot_radar_texto(

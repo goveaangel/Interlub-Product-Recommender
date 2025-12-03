@@ -116,22 +116,32 @@ def filtrar_por_requisitos_raw(df_raw: pd.DataFrame, req: dict) -> pd.DataFrame:
 
 
 def construir_fila_cliente_raw(df_raw: pd.DataFrame, req: dict) -> pd.DataFrame:
+    """
+    Construye la fila ideal en el espacio RAW usando directamente los objetivos v2
+    que vienen en `req` (T_min, T_max, punto de gota, 4B, desgaste).
+
+    Nota: la lógica de filtrado por carga y agua se mantiene en
+    `filtrar_por_requisitos_raw`. Aquí solo construimos el perfil ideal.
+    """
     fila = df_raw.mean(numeric_only=True)
 
+    # Temperaturas objetivo
     if req.get("T_min") is not None:
         fila["Temperatura de Servicio °C, min"] = req["T_min"]
     if req.get("T_max") is not None:
         fila["Temperatura de Servicio °C, max"] = req["T_max"]
 
-    if req.get("carga") in ["alta", "extrema"]:
-        if "Punto de Soldadura Cuatro Bolas, kgf" in df_raw.columns:
-            fila["Punto de Soldadura Cuatro Bolas, kgf"] = df_raw["Punto de Soldadura Cuatro Bolas, kgf"].quantile(0.9)
-        if "Carga Timken Ok, lb" in df_raw.columns:
-            fila["Carga Timken Ok, lb"] = df_raw["Carga Timken Ok, lb"].quantile(0.9)
+    # Punto de gota objetivo
+    if req.get("punto_gota") is not None and "Punto de Gota, °C" in df_raw.columns:
+        fila["Punto de Gota, °C"] = req["punto_gota"]
 
-    if req.get("ambiente_agua", False):
-        if "Resistencia al Lavado por Agua a 80°C, %" in df_raw.columns:
-            fila["Resistencia al Lavado por Agua a 80°C, %"] = df_raw["Resistencia al Lavado por Agua a 80°C, %"].quantile(0.1)
+    # Punto de soldadura 4B objetivo
+    if req.get("punto_soldadura_4b") is not None and "Punto de Soldadura Cuatro Bolas, kgf" in df_raw.columns:
+        fila["Punto de Soldadura Cuatro Bolas, kgf"] = req["punto_soldadura_4b"]
+
+    # Desgaste 4B objetivo
+    if req.get("desgaste_4b") is not None and "Desgaste Cuatro Bolas, mm" in df_raw.columns:
+        fila["Desgaste Cuatro Bolas, mm"] = req["desgaste_4b"]
 
     return fila.to_frame().T
 
@@ -270,10 +280,9 @@ def recomendar_interlub_pro(
     numeric_cols_radar = [
         "Temperatura de Servicio °C, min",
         "Temperatura de Servicio °C, max",
-        "Resistencia al Lavado por Agua a 80°C, %",
+        "Punto de Gota, °C",
         "Punto de Soldadura Cuatro Bolas, kgf",
-        "Carga Timken Ok, lb",
-    ]
+        "Desgaste Cuatro Bolas, mm"]
 
     # Solo columnas que existan en ambos
     numeric_cols_radar = [
