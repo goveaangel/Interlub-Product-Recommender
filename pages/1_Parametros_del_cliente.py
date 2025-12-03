@@ -262,6 +262,43 @@ def transformar_respuestas_a_v2(respuestas: QuestionnaireResponse):
     )
     return niveles, v2_deseado
 
+def construir_req_para_recomendador(
+    respuestas: QuestionnaireResponse,
+    niveles: LatentLevels,
+    v2: V2Vector,
+) -> dict:
+    """
+    Construye el diccionario de requisitos en el formato que espera
+    recomendar_interlub_pro a partir de:
+      - respuestas crudas del cuestionario
+      - niveles latentes (carga, etc.)
+      - vector técnico objetivo v2 (temp min/max, etc.)
+    """
+
+    # Temperaturas objetivo desde v2
+    T_min = v2.temp_min_servicio_obj
+    T_max = v2.temp_max_servicio_obj
+
+    # Mapear nivel de carga (1–5) a categorías del recomendador: media / alta / extrema
+    if niveles.Carga_nivel <= 2:
+        carga_cat = "media"
+    elif niveles.Carga_nivel <= 4:
+        carga_cat = "alta"
+    else:
+        carga_cat = "extrema"
+
+    # Presencia de agua / lavado frecuente
+    ambiente_agua = respuestas.cond_agua_lavado
+
+    req_recom = {
+        "T_min": T_min,
+        "T_max": T_max,
+        "carga": carga_cat,
+        "ambiente_agua": ambiente_agua,
+    }
+
+    return req_recom
+
 
 # -------------------------------------------------------------------
 # 4. Página Streamlit: cuestionario del cliente
@@ -492,6 +529,7 @@ with st.expander('⚙️ Parámetros operativos del cliente'):
             if cond_agua_lavado or cond_polvo or cond_contacto_alimentos or cond_vibraciones:
                 cond_sin_especiales = False
 
+        # Construir objeto de respuestas crudas
         respuestas = QuestionnaireResponse(
             ambiente_termico=ambiente_termico,
             temp_max_opcion=temp_max_opcion,
@@ -515,10 +553,11 @@ with st.expander('⚙️ Parámetros operativos del cliente'):
             cond_sin_especiales=cond_sin_especiales,
         )
 
+        # 1) Calcular niveles latentes + vector técnico objetivo v2
         niveles, v2_deseado = transformar_respuestas_a_v2(respuestas)
 
-        # Lo que va a usar el recomendador
-        req = {
+        # 2) Perfil técnico completo (v2) para uso futuro / explicaciones
+        req_v2 = {
             "punto_gota_obj": v2_deseado.punto_gota_obj,
             "punto_soldadura_4b_obj": v2_deseado.punto_soldadura_4b_obj,
             "desgaste_4b_obj": v2_deseado.desgaste_4b_obj,
@@ -526,7 +565,22 @@ with st.expander('⚙️ Parámetros operativos del cliente'):
             "temp_max_servicio_obj": v2_deseado.temp_max_servicio_obj,
         }
 
-        st.session_state["req"] = req
+        # 3) Requisitos en el formato que espera recomendar_interlub_pro
+        req_pro = construir_req_para_recomendador(
+            respuestas=respuestas,
+            niveles=niveles,
+            v2=v2_deseado,
+        )
+
+        # 4) Guardar TODO en session_state
+        #    - req_pro: lo que entiende el recomendador "pro"
+        #    - req_v2:  perfil técnico detallado (por si lo necesitas después)
+        st.session_state["req_pro"] = req_pro       # lo que entiende recomendar_interlub_pro
+        st.session_state["req_v2"] = req_v2         # perfil técnico detallado v2
+
+        # Alias "req" apuntando al v2, como antes
+        st.session_state["req"] = req_v2
+
         st.session_state["questionnaire_raw"] = respuestas.__dict__
         st.session_state["latent_levels"] = niveles.__dict__
         st.session_state["v2_deseado"] = v2_deseado.to_list()
@@ -534,12 +588,10 @@ with st.expander('⚙️ Parámetros operativos del cliente'):
         st.success("✅ Parámetros del cuestionario guardados correctamente.")
 
     else:
-        if "req" in st.session_state:
+        if "req_pro" in st.session_state:
             st.info("Ya hay parámetros de cuestionario guardados. Puedes modificarlos y volver a guardar.")
         else:
             st.info("Aún no hay parámetros guardados. Completa el cuestionario y presiona **Guardar parámetros**.")
-
-
 # -------------------------------------------------------------------
 # 5. Texto libre para CountVectorizer (tal cual tu ejemplo)
 # -------------------------------------------------------------------

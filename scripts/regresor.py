@@ -127,6 +127,7 @@ def simular_cambio_grasa(
     modelos,
     variable_cambiada,
     delta,
+    factor_ajuste=1.0,
 ):
     """
     Simula el efecto de modificar una variable de una grasa real.
@@ -142,7 +143,7 @@ def simular_cambio_grasa(
     delta : float
         Cambio que se aplica (ej. +5 °C).
     factor_ajuste : float
-        Entre 0 y 1. Cuánto confiamos en el valor del modelo:
+        Entre 0 y 1. Cuánto nos acercamos al valor sugerido por el modelo:
         1.0 = cambio completo, 0.5 = cambio suavizado.
 
     Devuelve
@@ -184,7 +185,8 @@ def simular_cambio_grasa(
         y_pred = modelo.predict(X_scaled)[0]
 
         y_original = grasa_real[v_obj]
-        y_nuevo = y_original + (y_pred - y_original)
+        # Mezcla original + sugerencia del modelo
+        y_nuevo = y_pred
 
         resumen.loc[v_obj, "valor_predicho_modelo"] = y_nuevo
 
@@ -268,7 +270,6 @@ def plot_cambio_variables(resumen: pd.DataFrame, variable_cambiada: str):
 # 2. Funciones cacheadas para Streamlit
 # ============================================================
 
-import pandas as pd
 import warnings
 # from scripts.tu_modulo_vae import simular_datos_vae
 # from scripts.tu_modulo_modelos import entrenar_modelos_multivariables

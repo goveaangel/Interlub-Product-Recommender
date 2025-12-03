@@ -265,17 +265,52 @@ def recomendar_interlub_pro(
     df_out["sim_carga"]  = sims["carga"]
     df_out["sim_agua"]   = sims["agua"]
     df_out["sim_visc"]   = sims["visc"]
-    df_out["score"]      = score_final
+    df_out["score"]      = score_final   # lo conservamos para depurar, pero ya no ordena
 
-    s_min, s_max = df_out["score"].min(), df_out["score"].max()
-    if s_max > s_min:
-        df_out["score_norm"] = 100 * (df_out["score"] - s_min) / (s_max - s_min)
+    numeric_cols_radar = [
+        "Temperatura de Servicio °C, min",
+        "Temperatura de Servicio °C, max",
+        "Resistencia al Lavado por Agua a 80°C, %",
+        "Punto de Soldadura Cuatro Bolas, kgf",
+        "Carga Timken Ok, lb",
+    ]
+
+    # Solo columnas que existan en ambos
+    numeric_cols_radar = [
+        c for c in numeric_cols_radar
+        if c in df_out.columns and c in fila_cliente_raw.columns
+    ]
+
+    if numeric_cols_radar:
+        # Normalización 0–1 global (todas las grasas)
+        mins = df_interlub_raw[numeric_cols_radar].min()
+        maxs = df_interlub_raw[numeric_cols_radar].max()
+
+        # Ideal como Serie (no DataFrame)
+        ideal_norm = (
+            (fila_cliente_raw[numeric_cols_radar].iloc[0] - mins)
+            / (maxs - mins + 1e-9)
+        )
+        prods_norm = (df_out[numeric_cols_radar] - mins) / (maxs - mins + 1e-9)
+
+        # Distancia euclidiana promedio en el espacio radar
+        diffs = prods_norm.sub(ideal_norm, axis=1)
+        dist_radar = np.sqrt((diffs ** 2).mean(axis=1))
+
+        # ----- Escala ABSOLUTA para el score -----
+        # Define hasta qué distancia consideras "ya muy diferente"
+        max_dist = 0.8  # puedes ajustar 0.6–1.0 según veas
+
+        dist_clipped = dist_radar.clip(0.0, max_dist)
+        sim_radar = 1.0 - dist_clipped / max_dist   # 1 = igual, 0 = muy lejos
+
+        df_out["score_norm"] = sim_radar * 100.0
     else:
         df_out["score_norm"] = 50.0
 
-    df_out = df_out.sort_values("score", ascending=False)
+    # Ordenar por score_norm (lo que realmente ve el cliente en el radar)
+    df_out = df_out.sort_values("score_norm", ascending=False)
     df_top = df_out.head(top_n).copy()
-
     # Explicaciones por producto
     explicaciones = []
     for idx, row in df_top.iterrows():
